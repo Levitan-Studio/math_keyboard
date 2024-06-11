@@ -21,6 +21,9 @@ enum MathKeyboardType {
 
   /// Keyboard for number input only.
   numberOnly,
+
+  /// Keyboard for number input only with slash foir decimal.
+  numberSlashOnly,
 }
 
 /// Widget displaying the math keyboard.
@@ -72,6 +75,40 @@ class MathKeyboard extends StatelessWidget {
   /// Defaults to `const EdgeInsets.only(bottom: 4, left: 4, right: 4),`.
   final EdgeInsets padding;
 
+  _Buttons buildButtons(MathKeyboardType type) {
+    List<List<KeyboardButtonConfig>>? page1;
+    List<List<KeyboardButtonConfig>>? page2;
+
+    switch (type) {
+      case MathKeyboardType.numberOnly:
+        page1 = numberKeyboard;
+        break;
+      case MathKeyboardType.numberSlashOnly:
+        page1 = numberSlashKeyboard;
+        break;
+      case MathKeyboardType.expression:
+        page1 = standardKeyboard;
+        break;
+    }
+
+    switch (type) {
+      case MathKeyboardType.numberOnly:
+      case MathKeyboardType.numberSlashOnly:
+        page2 = null;
+        break;
+      case MathKeyboardType.expression:
+        page1 = functionKeyboard;
+        break;
+    }
+
+    return _Buttons(
+      controller: controller,
+      page1: page1,
+      page2: type == MathKeyboardType.numberOnly ? null : functionKeyboard,
+      onSubmit: onSubmit,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final curvedSlideAnimation = CurvedAnimation(
@@ -109,7 +146,8 @@ class MathKeyboard extends StatelessWidget {
                           ),
                           child: Column(
                             children: [
-                              if (type != MathKeyboardType.numberOnly)
+                              if (type != MathKeyboardType.numberOnly ||
+                                  type != MathKeyboardType.numberSlashOnly)
                                 _Variables(
                                   controller: controller,
                                   variables: variables,
@@ -118,16 +156,7 @@ class MathKeyboard extends StatelessWidget {
                                 padding: const EdgeInsets.only(
                                   top: 4,
                                 ),
-                                child: _Buttons(
-                                  controller: controller,
-                                  page1: type == MathKeyboardType.numberOnly
-                                      ? numberKeyboard
-                                      : standardKeyboard,
-                                  page2: type == MathKeyboardType.numberOnly
-                                      ? null
-                                      : functionKeyboard,
-                                  onSubmit: onSubmit,
-                                ),
+                                child: buildButtons(type),
                               ),
                             ],
                           ),

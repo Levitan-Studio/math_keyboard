@@ -284,7 +284,7 @@ class _PrimaryPageState extends State<_PrimaryPage> {
             width: 420,
             child: MathField(
               controller: _numberController,
-              keyboardType: MathKeyboardType.numberOnly,
+              keyboardType: MathKeyboardType.numberSlashOnly,
               decoration: InputDecoration(
                 labelText: 'Number-only math field',
                 filled: true,

@@ -105,6 +105,13 @@ const _decimalButton = BasicKeyboardButtonConfig(
   highlighted: true,
 );
 
+const _decimalSlashButton = BasicKeyboardButtonConfig(
+  label: '/',
+  value: '/',
+  keyboardCharacters: ['/'],
+  highlighted: true,
+);
+
 const _subtractButton = BasicKeyboardButtonConfig(
   label: '−',
   value: '-',
@@ -284,6 +291,34 @@ final numberKeyboard = [
     _digitButtons[5],
     _digitButtons[6],
     _decimalButton,
+  ],
+  [
+    _digitButtons[1],
+    _digitButtons[2],
+    _digitButtons[3],
+    DeleteButtonConfig(),
+  ],
+  [
+    PreviousButtonConfig(),
+    _digitButtons[0],
+    NextButtonConfig(),
+    SubmitButtonConfig(),
+  ],
+];
+
+/// Keyboard getting shown for number input only.
+final numberSlashKeyboard = [
+  [
+    _digitButtons[7],
+    _digitButtons[8],
+    _digitButtons[9],
+    _subtractButton,
+  ],
+  [
+    _digitButtons[4],
+    _digitButtons[5],
+    _digitButtons[6],
+    _decimalSlashButton,
   ],
   [
     _digitButtons[1],
