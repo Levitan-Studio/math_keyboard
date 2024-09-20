@@ -26,6 +26,7 @@ class MathField extends StatefulWidget {
     this.decoration = const InputDecoration(),
     this.onChanged,
     this.onSubmitted,
+    this.attachWidget = false,
     this.opensKeyboard = true,
   }) : super(key: key);
 
@@ -45,6 +46,9 @@ class MathField extends StatefulWidget {
   /// This only controls the layout of the keyboard that will pop up to fill in
   /// the math field.
   final MathKeyboardType keyboardType;
+
+  /// Add attached widget with current text
+  final bool attachWidget;
 
   /// The additional variables a user can use.
   ///
@@ -328,6 +332,8 @@ class _MathFieldState extends State<MathField> with TickerProviderStateMixin {
           child: MathKeyboard(
             controller: _controller,
             type: widget.keyboardType,
+            attachWidget: widget.attachWidget,
+            defaultAttachedText: widget.decoration.hintText,
             variables: _variables,
             onSubmit: _submit,
             // Note that we need to pass the insets state like this because the
@@ -490,7 +496,7 @@ class _MathFieldState extends State<MathField> with TickerProviderStateMixin {
         return true;
       },
       child: MouseRegion(
-        cursor: MaterialStateMouseCursor.textable,
+        cursor: WidgetStateMouseCursor.textable,
         child: Focus(
           focusNode: _focusNode,
           autofocus: widget.autofocus,
@@ -636,7 +642,7 @@ class _FieldPreview extends StatelessWidget {
         decoration: decoration,
         child: SingleChildScrollView(
           controller: scrollController,
-          scrollDirection: Axis.horizontal,
+          scrollDirection: Axis.vertical,
           child: Stack(
             children: [
               Transform.translate(

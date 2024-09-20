@@ -26,6 +26,7 @@ class MathFormField extends FormField<String> {
     FocusNode? focusNode,
     InputDecoration decoration = const InputDecoration(),
     MathKeyboardType keyboardType = MathKeyboardType.expression,
+    bool attachWidget = false,
     List<String> variables = const [],
     bool autofocus = false,
     ValueChanged<String>? onChanged,

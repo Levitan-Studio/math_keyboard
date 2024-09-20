@@ -3,6 +3,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:math_keyboard/src/custom_key_icons/custom_key_icons.dart';
 import 'package:math_keyboard/src/foundation/keyboard_button.dart';
+import 'package:math_keyboard/src/foundation/node.dart';
 import 'package:math_keyboard/src/widgets/decimal_separator.dart';
 import 'package:math_keyboard/src/widgets/keyboard_button.dart';
 import 'package:math_keyboard/src/widgets/math_field.dart';
@@ -19,11 +20,68 @@ enum MathKeyboardType {
   /// page with extended functions.
   expression,
 
+  /// Keyboard for entering complete math expressions.
+  ///
+  /// This shows numbers + operators and a toggle button to switch to another
+  /// page with extended functions.
+  ///
+  /// Extra Submit is replaced by Returns
+  expressionWithReturn,
+
   /// Keyboard for number input only.
   numberOnly,
 
   /// Keyboard for number input only with slash foir decimal.
   numberSlashOnly,
+}
+
+class TextValue extends StatefulWidget {
+  final MathFieldEditingController controller;
+  final String? emptyHolder;
+
+  TextValue({super.key, required this.controller, this.emptyHolder});
+
+  @override
+  State<TextValue> createState() => _TextValueState();
+}
+
+class _TextValueState extends State<TextValue> {
+  String _text = '';
+
+  void listener() {
+    setState(() {
+      _text =
+          widget.controller.currentEditingValue(placeholderWhenEmpty: false);
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _text = widget.controller.currentEditingValue(placeholderWhenEmpty: false);
+    if (_text.isEmpty) {
+      _text = widget.emptyHolder ?? 'Enter .. ';
+    }
+    widget.controller.addListener(listener);
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(listener);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(
+        bottom: 4,
+        left: 4,
+        right: 4,
+      ),
+      child: Text(_text),
+    );
+  }
 }
 
 /// Widget displaying the math keyboard.
@@ -37,6 +95,8 @@ class MathKeyboard extends StatelessWidget {
     this.onSubmit,
     this.insetsState,
     this.slideAnimation,
+    this.attachWidget = false,
+    this.defaultAttachedText,
     this.padding = const EdgeInsets.only(
       bottom: 4,
       left: 4,
@@ -45,7 +105,7 @@ class MathKeyboard extends StatelessWidget {
   }) : super(key: key);
 
   /// The controller for editing the math field.
-  ///
+  /// nmmn
   /// Must not be `null`.
   final MathFieldEditingController controller;
 
@@ -64,6 +124,12 @@ class MathKeyboard extends StatelessWidget {
 
   /// The Type of the Keyboard.
   final MathKeyboardType type;
+
+  /// Add attached widget with current text
+  final bool attachWidget;
+
+  /// If [attachWidget] is true, define default / start text.
+  final String? defaultAttachedText;
 
   /// Function that is called when the enter / submit button is tapped.
   ///
@@ -89,6 +155,9 @@ class MathKeyboard extends StatelessWidget {
       case MathKeyboardType.expression:
         page1 = standardKeyboard;
         break;
+      case MathKeyboardType.expressionWithReturn:
+        page1 = standardWithReturnKeyboard;
+        break;
     }
 
     switch (type) {
@@ -97,14 +166,15 @@ class MathKeyboard extends StatelessWidget {
         page2 = null;
         break;
       case MathKeyboardType.expression:
-        page1 = functionKeyboard;
+      case MathKeyboardType.expressionWithReturn:
+        page2 = functionKeyboard;
         break;
     }
 
     return _Buttons(
       controller: controller,
       page1: page1,
-      page2: type == MathKeyboardType.numberOnly ? null : functionKeyboard,
+      page2: page2,
       onSubmit: onSubmit,
     );
   }
@@ -130,7 +200,7 @@ class MathKeyboard extends StatelessWidget {
             child: Material(
               type: MaterialType.transparency,
               child: ColoredBox(
-                color: Colors.black,
+                color: Theme.of(context).colorScheme.surfaceContainer,
                 child: SafeArea(
                   top: false,
                   child: _KeyboardBody(
@@ -146,7 +216,11 @@ class MathKeyboard extends StatelessWidget {
                           ),
                           child: Column(
                             children: [
-                              if (type != MathKeyboardType.numberOnly ||
+                              if (attachWidget)
+                                TextValue(
+                                    controller: controller,
+                                    emptyHolder: defaultAttachedText),
+                              if (type != MathKeyboardType.numberOnly &&
                                   type != MathKeyboardType.numberSlashOnly)
                                 _Variables(
                                   controller: controller,
@@ -277,7 +351,7 @@ class _Variables extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: 54,
-      color: Colors.grey[900],
+      color: Theme.of(context).colorScheme.surfaceContainer,
       child: AnimatedBuilder(
         animation: controller,
         builder: (context, child) {
@@ -289,7 +363,7 @@ class _Variables extends StatelessWidget {
                 child: Container(
                   height: 24,
                   width: 1,
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               );
             },
@@ -400,6 +474,13 @@ class _Buttons extends StatelessWidget {
                             icon: Icons.keyboard_return,
                             onTap: onSubmit,
                             highlightLevel: 2,
+                          )
+                        else if (config is ReturnButtonConfig)
+                          _BasicButton(
+                            flex: config.flex,
+                            icon: Icons.keyboard_return,
+                            onTap: controller.goNext,
+                            highlightLevel: 2,
                           ),
                     ],
                   ),
@@ -421,6 +502,7 @@ class _BasicButton extends StatelessWidget {
     this.label,
     this.icon,
     this.onTap,
+    // this.onDoubleTap,
     this.asTex = false,
     this.highlightLevel = 0,
   })  : assert(label != null || icon != null),
@@ -450,14 +532,14 @@ class _BasicButton extends StatelessWidget {
     if (label == null) {
       result = Icon(
         icon,
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.onSurface,
       );
     } else if (asTex) {
       result = Math.tex(
         label!,
         options: MathOptions(
-          fontSize: 22,
-          color: Colors.white,
+          fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,
+          color: Theme.of(context).colorScheme.onSurface,
         ),
       );
     } else {
@@ -470,9 +552,9 @@ class _BasicButton extends StatelessWidget {
 
       result = Text(
         symbol!,
-        style: const TextStyle(
-          fontSize: 22,
-          color: Colors.white,
+        style: TextStyle(
+          fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,
+          color: Theme.of(context).colorScheme.onSurface,
         ),
       );
     }
@@ -482,7 +564,7 @@ class _BasicButton extends StatelessWidget {
       color: highlightLevel > 1
           ? Theme.of(context).colorScheme.secondary
           : highlightLevel == 1
-              ? Colors.grey[900]
+              ? Theme.of(context).colorScheme.surfaceContainer
               : null,
       child: result,
     );
@@ -524,10 +606,10 @@ class _NavigationButton extends StatelessWidget {
       child: KeyboardButton(
         onTap: onTap,
         onHold: onTap,
-        color: Colors.grey[900],
+        color: Theme.of(context).colorScheme.surfaceContainer,
         child: Icon(
           icon,
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.onSurface,
           size: iconSize,
         ),
       ),
@@ -558,7 +640,7 @@ class _VariableButton extends StatelessWidget {
         name,
         options: MathOptions(
           fontSize: 22,
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.onSurface,
         ),
       ),
     );

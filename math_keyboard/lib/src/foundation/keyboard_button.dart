@@ -80,6 +80,12 @@ class SubmitButtonConfig extends KeyboardButtonConfig {
   SubmitButtonConfig({int? flex}) : super(flex: flex);
 }
 
+/// Class representing a button configuration of the Return Button.
+class ReturnButtonConfig extends KeyboardButtonConfig {
+  /// Constructs a [ReturnButtonConfig].
+  ReturnButtonConfig({int? flex}) : super(flex: flex);
+}
+
 /// Class representing a button configuration of the Page Toggle Button.
 class PageButtonConfig extends KeyboardButtonConfig {
   /// Constructs a [PageButtonConfig].
@@ -174,6 +180,13 @@ final functionKeyboard = [
       asTex: true,
     ),
     const BasicKeyboardButtonConfig(
+      label: r'\int_{\Box}^{\Box}(\Box)',
+      value: r'\int_',
+      highlighted: true,
+      args: [TeXArg.braces, TeXArg.braces, TeXArg.parentheses],
+      asTex: true,
+    ),
+    const BasicKeyboardButtonConfig(
       label: r'\cos',
       value: r'\cos(',
       asTex: true,
@@ -197,6 +210,12 @@ final functionKeyboard = [
       value: r'\ln(',
       asTex: true,
       keyboardCharacters: ['l'],
+    ),
+    const BasicKeyboardButtonConfig(
+      label: '=',
+      value: '=',
+      highlighted: true,
+      keyboardCharacters: ['='],
     ),
     const BasicKeyboardButtonConfig(
       label: r'\tan',
@@ -275,6 +294,54 @@ final standardKeyboard = [
     PreviousButtonConfig(),
     NextButtonConfig(),
     SubmitButtonConfig(),
+  ],
+];
+
+/// Standard keyboard for math expression input.
+final standardWithReturnKeyboard = [
+  [
+    _digitButtons[7],
+    _digitButtons[8],
+    _digitButtons[9],
+    const BasicKeyboardButtonConfig(
+      label: '×',
+      value: r'\cdot',
+      keyboardCharacters: ['*'],
+      highlighted: true,
+    ),
+    const BasicKeyboardButtonConfig(
+      label: '÷',
+      value: r'\frac',
+      keyboardCharacters: ['/'],
+      args: [TeXArg.braces, TeXArg.braces],
+      highlighted: true,
+    ),
+  ],
+  [
+    _digitButtons[4],
+    _digitButtons[5],
+    _digitButtons[6],
+    const BasicKeyboardButtonConfig(
+      label: '+',
+      value: '+',
+      keyboardCharacters: ['+'],
+      highlighted: true,
+    ),
+    _subtractButton,
+  ],
+  [
+    _digitButtons[1],
+    _digitButtons[2],
+    _digitButtons[3],
+    _decimalButton,
+    DeleteButtonConfig(),
+  ],
+  [
+    const PageButtonConfig(),
+    _digitButtons[0],
+    PreviousButtonConfig(),
+    NextButtonConfig(),
+    ReturnButtonConfig(),
   ],
 ];
 
