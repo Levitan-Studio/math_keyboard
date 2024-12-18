@@ -705,8 +705,11 @@ class MathFieldEditingController extends ChangeNotifier {
       placeholderWhenEmpty: placeholderWhenEmpty,
     );
     currentNode.setCursor();
-
     return expression;
+  }
+
+  int getCursorLocation() {
+    return currentNode.courserPosition;
   }
 
   /// Clears the current value and sets it to the [expression] equivalent.

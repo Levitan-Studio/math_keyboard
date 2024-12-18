@@ -182,7 +182,6 @@ final functionKeyboard = [
     const BasicKeyboardButtonConfig(
       label: r'\int_{\Box}^{\Box}(\Box)',
       value: r'\int_',
-      highlighted: true,
       args: [TeXArg.braces, TeXArg.braces, TeXArg.parentheses],
       asTex: true,
     ),
@@ -214,7 +213,6 @@ final functionKeyboard = [
     const BasicKeyboardButtonConfig(
       label: '=',
       value: '=',
-      highlighted: true,
       keyboardCharacters: ['='],
     ),
     const BasicKeyboardButtonConfig(

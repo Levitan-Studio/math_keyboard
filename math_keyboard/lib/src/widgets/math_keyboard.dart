@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
@@ -47,11 +49,15 @@ class TextValue extends StatefulWidget {
 
 class _TextValueState extends State<TextValue> {
   String _text = '';
+  int _cursorPosition = -1;
+  Timer? _cursorTimer;
+  bool _showCursor = true;
 
   void listener() {
     setState(() {
       _text =
           widget.controller.currentEditingValue(placeholderWhenEmpty: false);
+      _cursorPosition = widget.controller.getCursorLocation();
     });
   }
 
@@ -59,28 +65,96 @@ class _TextValueState extends State<TextValue> {
   void initState() {
     super.initState();
     _text = widget.controller.currentEditingValue(placeholderWhenEmpty: false);
+    _cursorPosition = widget.controller.getCursorLocation();
     if (_text.isEmpty) {
       _text = widget.emptyHolder ?? 'Enter .. ';
     }
+
     widget.controller.addListener(listener);
+    _cursorTimer = Timer.periodic(const Duration(milliseconds: 500), (timer) {
+      setState(() {
+        _showCursor = !_showCursor;
+      });
+    });
   }
 
   @override
   void dispose() {
     widget.controller.removeListener(listener);
+    _cursorTimer?.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final textSpan =
+        TextSpan(text: _text, style: DefaultTextStyle.of(context).style);
+    final textPainter = TextPainter(
+      text: textSpan,
+      textDirection: TextDirection.ltr,
+    );
+    textPainter.layout();
+
+    Offset cursorOffset = Offset.zero;
+    if (_cursorPosition >= 0 && _cursorPosition <= _text.length) {
+      final cursorPrototype =
+          Rect.fromLTWH(0, 0, 2, textPainter.preferredLineHeight);
+      cursorOffset = textPainter.getOffsetForCaret(
+          TextPosition(offset: _cursorPosition), cursorPrototype);
+    } else {
+      cursorOffset = Offset.zero;
+    }
+
     return Padding(
       padding: const EdgeInsets.only(
         bottom: 4,
         left: 4,
         right: 4,
       ),
-      child: Text(_text),
+      child: Stack(
+        alignment: Alignment.topLeft,
+        children: [
+          Text(_text),
+          if (_cursorPosition >= 0 && _showCursor)
+            Positioned.fill(
+              child: CustomPaint(
+                painter: CursorPainter(
+                  cursorOffset: cursorOffset,
+                  cursorHeight: textPainter.preferredLineHeight,
+                  cursorColor: Theme.of(context).colorScheme.secondary,
+                ),
+              ),
+            ),
+        ],
+      ),
     );
+  }
+}
+
+class CursorPainter extends CustomPainter {
+  final Offset cursorOffset;
+  final double cursorHeight;
+  final Color cursorColor;
+
+  CursorPainter({
+    required this.cursorOffset,
+    required this.cursorHeight,
+    this.cursorColor = Colors.black,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = cursorColor;
+    // Draw a simple vertical line for the cursor
+    final cursorRect =
+        Rect.fromLTWH(cursorOffset.dx, cursorOffset.dy, 2, cursorHeight);
+    canvas.drawRect(cursorRect, paint);
+  }
+
+  @override
+  bool shouldRepaint(CursorPainter oldDelegate) {
+    return cursorOffset != oldDelegate.cursorOffset ||
+        cursorHeight != oldDelegate.cursorHeight;
   }
 }
 
@@ -200,7 +274,7 @@ class MathKeyboard extends StatelessWidget {
             child: Material(
               type: MaterialType.transparency,
               child: ColoredBox(
-                color: Theme.of(context).colorScheme.surfaceContainer,
+                color: Theme.of(context).colorScheme.surfaceContainerHigh,
                 child: SafeArea(
                   top: false,
                   child: _KeyboardBody(
@@ -217,9 +291,15 @@ class MathKeyboard extends StatelessWidget {
                           child: Column(
                             children: [
                               if (attachWidget)
-                                TextValue(
-                                    controller: controller,
-                                    emptyHolder: defaultAttachedText),
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                    bottom: 0,
+                                    top: 4,
+                                  ),
+                                  child: TextValue(
+                                      controller: controller,
+                                      emptyHolder: defaultAttachedText),
+                                ),
                               if (type != MathKeyboardType.numberOnly &&
                                   type != MathKeyboardType.numberSlashOnly)
                                 _Variables(
@@ -228,7 +308,7 @@ class MathKeyboard extends StatelessWidget {
                                 ),
                               Padding(
                                 padding: const EdgeInsets.only(
-                                  top: 4,
+                                  top: 0,
                                 ),
                                 child: buildButtons(type),
                               ),
@@ -561,11 +641,9 @@ class _BasicButton extends StatelessWidget {
 
     result = KeyboardButton(
       onTap: onTap,
-      color: highlightLevel > 1
-          ? Theme.of(context).colorScheme.secondary
-          : highlightLevel == 1
-              ? Theme.of(context).colorScheme.surfaceContainer
-              : null,
+      color: highlightLevel >= 1
+          ? Theme.of(context).colorScheme.surface
+          : Theme.of(context).colorScheme.surfaceBright,
       child: result,
     );
 
@@ -606,7 +684,7 @@ class _NavigationButton extends StatelessWidget {
       child: KeyboardButton(
         onTap: onTap,
         onHold: onTap,
-        color: Theme.of(context).colorScheme.surfaceContainer,
+        color: Theme.of(context).colorScheme.surface,
         child: Icon(
           icon,
           color: Theme.of(context).colorScheme.onSurface,

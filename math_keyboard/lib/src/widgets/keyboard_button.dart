@@ -72,11 +72,6 @@ class _KeyboardButtonState extends State<KeyboardButton>
     _animationController.value = 0;
   }
 
-void _handleTapx() {
-    print("TESSTSTT");
-  }
-
-
   @override
   Widget build(BuildContext context) {
     Widget result = MouseRegion(
@@ -91,7 +86,6 @@ void _handleTapx() {
             (_AlwaysWinningGestureRecognizer instance) {
               instance
                 ..onTap = widget.onTap
-                ..onSecondaryTap = _handleTapx
                 ..onTapUp = _handleTapUp
                 ..onTapDown = _handleTapDown
                 ..onTapCancel = _handleTapCancel;
